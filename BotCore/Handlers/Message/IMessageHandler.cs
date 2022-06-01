@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Telegram.Bot;
-using Telegram.Bot.Types;
+﻿using System.Threading.Tasks;
 
 namespace BotCore.Handlers.Message
 {
@@ -11,6 +8,6 @@ namespace BotCore.Handlers.Message
 
         public bool CanHandle(string message);
 
-        public Task Handle(string message, ITelegramBotClient botClient, Update update, CancellationToken cancellationToken);
+        public Task Handle(BotMessage message, BotInstruments instruments);
     }
 }

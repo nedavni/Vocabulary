@@ -1,21 +1,25 @@
 ﻿using System.ComponentModel.Composition;
-using System.Threading;
 using System.Threading.Tasks;
+using BotCore.Cache;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 
 namespace BotCore.Handlers.Callback
 {
     [Export(typeof(ICallbackHandler))]
-    internal class AddTextCallbackHandler : ICallbackHandler
+    internal class AddTextCallbackHandler : CallbackHandlerBase
     {
-        public int Order { get; }
-
-        public bool CanHandle(UserCallback callback) => callback.Command == BotCommands.AddText;
-
-        public Task Handle(UserCallback callback, ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public AddTextCallbackHandler(IDataCache cache) : base(cache)
         {
-           return botClient.SendTextMessageAsync(update.CallbackQuery.Message.Chat.Id, $"Added as text {callback.Payload}");
+        }
+
+        public override CallbackKind CanHandleKind => CallbackKind.AddText;
+
+        protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+        {
+            return botInstruments.BotClient.SendTextMessageAsync(
+                botInstruments.Update.CallbackQuery.Message.Chat.Id,
+                $"Added as text {callback.Data}",
+                cancellationToken: botInstruments.CancellationToken);
         }
     }
 }

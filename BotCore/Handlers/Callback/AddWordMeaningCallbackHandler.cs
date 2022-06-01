@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.Composition;
 using System.Threading;
 using System.Threading.Tasks;
+using BotCore.Cache;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -8,15 +9,18 @@ using Telegram.Bot.Types.Enums;
 namespace BotCore.Handlers.Callback
 {
     [Export(typeof(ICallbackHandler))]
-    internal class AddKeyValueCallbackHandler : ICallbackHandler
+    internal class AddWordMeaningCallbackHandler : CallbackHandlerBase
     {
-        public int Order => 100;
-
-        public bool CanHandle(UserCallback callback) => callback.Command == BotCommands.AddKeyValue;
-
-        public Task Handle(UserCallback callback, ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public AddWordMeaningCallbackHandler(IDataCache dataCache) : base(dataCache)
         {
-            var keyValue = callback.Payload.Split('_');
+        }
+
+        public override CallbackKind CanHandleKind => CallbackKind.AddWordMeaning;
+
+        protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+        {
+            var (botClient, update, _) = botInstruments;
+            var keyValue = callback.Data.Split('_');
             if (keyValue.Length != 2)
             {
                 return botClient.SendTextMessageAsync(

@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.Composition;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotCore.Handlers.Callback
@@ -10,12 +8,11 @@ namespace BotCore.Handlers.Callback
     [Export(typeof(ICallbackHandler))]
     internal class MenuCallbackHandler : ICallbackHandler
     {
-        public int Order { get; }
+        public bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.Menu;
 
-        public bool CanHandle(UserCallback callback) => callback.Command == BotCommands.Menu;
-
-        public Task Handle(UserCallback callback, ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public Task Handle(UserCallback callback, BotInstruments botInstruments)
         {
+            var (botClient, update, _) = botInstruments;
             ReplyKeyboardMarkup replyKeyboardMarkup = new(
                 new[]
                 {

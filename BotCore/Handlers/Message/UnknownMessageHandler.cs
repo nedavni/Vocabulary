@@ -1,45 +1,53 @@
 ﻿using System.ComponentModel.Composition;
-using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
+using BotCore.Cache;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BotCore.Handlers.Message
+namespace BotCore.Handlers.Message;
+
+[Export(typeof(IMessageHandler))]
+internal class UnknownMessageHandler : IMessageHandler
 {
-    [Export(typeof(IMessageHandler))]
-    internal class UnknownMessageHandler : IMessageHandler
+    private readonly IDataCache _dataCache;
+
+    public UnknownMessageHandler(IDataCache dataCache)
     {
-        public int Order => int.MaxValue;
+        _dataCache = dataCache;
+    }
 
-        public bool CanHandle(string message) => true;
+    public int Order => int.MaxValue;
 
-        public Task Handle(string message, ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
-        {
-            InlineKeyboardMarkup inlineKeyboard = new(
+    public bool CanHandle(string message)
+    {
+        return true;
+    }
+
+    public Task Handle(BotMessage message, BotInstruments instruments)
+    {
+        InlineKeyboardMarkup inlineKeyboard = new(
+            new[]
+            {
                 new[]
                 {
-                    new[]{
                     InlineKeyboardButton.WithCallbackData(
                         "Add as text",
-                        JsonSerializer.Serialize(new UserCallback(BotCommands.AddText, update.Message.From.Id, update.Message.Text))),
+                        _dataCache.StoreCallback(CallbackKind.AddText, message.UserId, message.Text).Serialize()),
                     InlineKeyboardButton.WithCallbackData(
                         "Add as word - meaning",
-                        JsonSerializer.Serialize(new UserCallback(BotCommands.AddKeyValue, update.Message.From.Id, update.Message.Text)))
-                    },
-                    new []
-                    {
-                        InlineKeyboardButton.WithCallbackData(
-                            BotCommands.Menu,
-                            JsonSerializer.Serialize(new UserCallback(BotCommands.Menu, update.Message.From.Id, update.Message.Text)))
-                    }
-                });
+                        _dataCache.StoreCallback(CallbackKind.AddWordMeaning, message.UserId, message.Text).Serialize())
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(
+                        "Menu",
+                        _dataCache.StoreCallback(CallbackKind.Menu, message.UserId, message.Text).Serialize())
+                }
+            });
 
-            return botClient.SendTextMessageAsync(
-                update.Message.Chat.Id,
-                update.Message.Text!,
-                replyMarkup: inlineKeyboard);
-        }
+        return instruments.BotClient.SendTextMessageAsync(
+            message.ChatId,
+            message.Text,
+            replyMarkup: inlineKeyboard);
     }
 }

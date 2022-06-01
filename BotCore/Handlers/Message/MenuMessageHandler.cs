@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.Composition;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotCore.Handlers.Message
@@ -14,7 +12,7 @@ namespace BotCore.Handlers.Message
 
         public bool CanHandle(string message) => message == "/menu";
 
-        public Task Handle(string message, ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+        public Task Handle(BotMessage message, BotInstruments instruments)
         {
             ReplyKeyboardMarkup replyKeyboardMarkup = new(
                 new[]
@@ -26,11 +24,10 @@ namespace BotCore.Handlers.Message
                 OneTimeKeyboard = true
             };
 
-            return botClient.SendTextMessageAsync(
-                update.Message.Chat.Id,
+            return instruments.BotClient.SendTextMessageAsync(
+                message.ChatId,
                 "/menu",
                 replyMarkup: replyKeyboardMarkup);
         }
-        
     }
 }

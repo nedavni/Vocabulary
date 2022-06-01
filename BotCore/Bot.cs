@@ -26,7 +26,7 @@ public sealed class Bot
         _messageHandlers = messageHandlers
             .OrderBy(h => h.Order)
             .ToArray();
-        
+
         _callbackHandlers = callbackHandlers.ToArray();
     }
 
@@ -45,42 +45,44 @@ public sealed class Bot
 
     private async Task OnUpdate(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
+        var instruments = new BotInstruments(botClient, update, cancellationToken);
         switch (update.Type)
         {
             case UpdateType.Message:
-                await ProcessMessage(botClient, update, cancellationToken);
+            case UpdateType.EditedMessage:
+                await ProcessMessage(update.GetMessage(), instruments);
                 break;
             case UpdateType.CallbackQuery:
-                await ProcessCallback(botClient, update, cancellationToken);
+                await ProcessCallback(instruments);
                 break;
             default:
-                throw new InvalidOperationException($"Invalid message type: {update.Message.Type}");
+                throw new InvalidOperationException($"Invalid message type: {update.Type}");
         }
     }
 
-    private async Task ProcessMessage(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    private async Task ProcessMessage(BotMessage message, BotInstruments instruments)
     {
-        var handler = _messageHandlers.FirstOrDefault(h => h.CanHandle(update.Message.Text));
+        var handler = _messageHandlers.FirstOrDefault(h => h.CanHandle(message.Text));
 
         if (handler == null)
         {
-            throw new NotImplementedException($"Handlers for message {update.Message.Text} not found!");
+            throw new NotImplementedException($"Handlers for message {message.Text} not found!");
         }
 
-        await handler.Handle(update.Message.Text, botClient, update, cancellationToken);
+        await handler.Handle(message, instruments);
     }
 
-    private async Task ProcessCallback(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    private async Task ProcessCallback(BotInstruments botInstruments)
     {
-        var answer = JsonSerializer.Deserialize<UserCallback>(update.CallbackQuery.Data)!;
+        var answer = JsonSerializer.Deserialize<UserCallback>(botInstruments.Update.CallbackQuery.Data);
 
         var handler = _callbackHandlers.FirstOrDefault(h => h.CanHandle(answer));
 
         if (handler == null)
         {
-            throw new NotImplementedException($"Handlers for message {update.Message.Text} not found!");
+            throw new NotImplementedException($"Handlers for message {answer} not found!");
         }
 
-        await handler.Handle(answer, botClient, update, cancellationToken);
+        await handler.Handle(answer, botInstruments);
     }
 }
