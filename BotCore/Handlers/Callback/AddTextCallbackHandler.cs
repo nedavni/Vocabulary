@@ -1,10 +1,12 @@
-﻿using System.Threading;
+﻿using System.ComponentModel.Composition;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace BotCore.Handlers.Callback
 {
+    [Export(typeof(ICallbackHandler))]
     internal class AddTextCallbackHandler : ICallbackHandler
     {
         public int Order { get; }

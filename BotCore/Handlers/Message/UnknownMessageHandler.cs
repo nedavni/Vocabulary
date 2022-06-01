@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.ComponentModel.Composition;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -7,6 +8,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotCore.Handlers.Message
 {
+    [Export(typeof(IMessageHandler))]
     internal class UnknownMessageHandler : IMessageHandler
     {
         public int Order => int.MaxValue;

@@ -5,7 +5,7 @@ using Telegram.Bot.Types;
 
 namespace BotCore.Handlers.Callback
 {
-    internal interface ICallbackHandler
+    public interface ICallbackHandler
     {
         public int Order { get; }
 

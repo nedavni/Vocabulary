@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.ComponentModel.Composition;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -6,6 +7,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotCore.Handlers.Callback
 {
+    [Export(typeof(ICallbackHandler))]
     internal class MenuCallbackHandler : ICallbackHandler
     {
         public int Order { get; }

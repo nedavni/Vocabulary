@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.ComponentModel.Composition;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -6,6 +7,7 @@ using Telegram.Bot.Types.Enums;
 
 namespace BotCore.Handlers.Message
 {
+    [Export(typeof(IMessageHandler))]
     internal class StartMessageHandler : IMessageHandler
     {
         public int Order => 0;

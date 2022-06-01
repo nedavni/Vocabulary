@@ -5,7 +5,7 @@ using Telegram.Bot.Types;
 
 namespace BotCore.Handlers.Message
 {
-    internal interface IMessageHandler
+    public interface IMessageHandler
     {
         public int Order { get; }
 

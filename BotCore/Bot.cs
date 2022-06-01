@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -11,30 +13,21 @@ using Telegram.Bot.Types.Enums;
 
 namespace BotCore;
 
+[Export]
 public sealed class Bot
 {
     private readonly TelegramBotClient _bot;
     private readonly IMessageHandler[] _messageHandlers;
     private readonly ICallbackHandler[] _callbackHandlers;
 
-    public Bot(string token)
+    public Bot(string token, IEnumerable<IMessageHandler> messageHandlers, IEnumerable<ICallbackHandler> callbackHandlers)
     {
         _bot = new TelegramBotClient(token);
-        _messageHandlers = new IMessageHandler[]
-        {
-            new StartMessageHandler(),
-            new MenuMessageHandler(),
-            new UnknownMessageHandler()
-        }
+        _messageHandlers = messageHandlers
             .OrderBy(h => h.Order)
             .ToArray();
-
-        _callbackHandlers = new ICallbackHandler[]
-        {
-            new MenuCallbackHandler(),
-            new AddTextCallbackHandler(),
-            new AddKeyValueCallbackHandler()
-        };
+        
+        _callbackHandlers = callbackHandlers.ToArray();
     }
 
 
