@@ -19,11 +19,15 @@ internal abstract class CallbackHandlerBase : ICallbackHandler
 
     public Task Handle(UserCallback callback, BotInstruments botInstruments)
     {
+        var (botClient, update, cancellationToken) = botInstruments;
         if (Cache.TryGetAsCallbackData(callback.Id, out var data))
         {
             return HandleInternal(data, botInstruments);
         }
-        return botInstruments.BotClient.SendTextMessageAsync(botInstruments.Update.CallbackQuery.Message.Chat.Id, "Cant process request, try to repeat operation!", cancellationToken: cancellationToken);
+        return botClient.SendTextMessageAsync(
+            update.CallbackQuery.Message.Chat.Id,
+            "Cant process request, try to repeat operation!",
+            cancellationToken: cancellationToken);
     }
 
     protected abstract Task HandleInternal(CallbackData callback, BotInstruments botInstruments);

@@ -40,6 +40,21 @@ internal class UnknownMessageHandler : IMessageHandler
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData(
+                        "Remove word",
+                        _dataCache.StoreCallback(CallbackKind.RemoveWord, message.UserId, message.Text).Serialize()),
+                    InlineKeyboardButton.WithCallbackData(
+                        "Remove meaning",
+                        _dataCache.StoreCallback(CallbackKind.RemoveMeaning, message.UserId, message.Text).Serialize()),
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(
+                        "Remove text that contains word",
+                        _dataCache.StoreCallback(CallbackKind.RemoveTextThatContainsWord, message.UserId, message.Text).Serialize())
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(
                         "Menu",
                         _dataCache.StoreCallback(CallbackKind.Menu, message.UserId, message.Text).Serialize())
                 }

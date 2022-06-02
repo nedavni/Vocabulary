@@ -5,7 +5,11 @@
         Menu = 0,
         AddWordMeaning,
         AddText,
-        RemoveWord
+        RemoveWord,
+        RemoveMeaning,
+        RemoveMeaningForWord,
+        RemoveTextThatContainsWord,
+        RemoveExactText
     }
 
     internal class BotCommands
