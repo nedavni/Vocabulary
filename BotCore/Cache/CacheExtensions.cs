@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Text.Json;
+using BotCore.Messaging;
+using BotCore.Messaging.Callbacks;
 
 namespace BotCore.Cache;
 

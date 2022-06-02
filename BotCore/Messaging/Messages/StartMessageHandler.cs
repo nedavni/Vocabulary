@@ -3,14 +3,13 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 
-namespace BotCore.Handlers.Message
+namespace BotCore.Messaging.Messages
 {
-    [Export(typeof(IMessageHandler))]
-    internal class StartMessageHandler : IMessageHandler
+    [Export(typeof(IMessageHandler<BotMessage>))]
+    internal class StartMessageHandler : IMessageHandler<BotMessage>
     {
-        public int Order => 0;
+        public bool CanHandle(BotMessage message) => message.Kind == MessageKind.Start;
 
-        public bool CanHandle(string message) => message == "/start";
         public Task Handle(BotMessage message, BotInstruments instruments) =>
             instruments.BotClient.SendTextMessageAsync(
                 message.ChatId,

@@ -1,14 +1,10 @@
-﻿using System.ComponentModel.Composition;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using BotCore.Cache;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace BotCore.Handlers.Callback
+namespace BotCore.Messaging.Callbacks
 {
-    [Export(typeof(ICallbackHandler))]
     internal class AddWordMeaningCallbackHandler : CallbackHandlerBase
     {
         public AddWordMeaningCallbackHandler(IDataCache dataCache) : base(dataCache)

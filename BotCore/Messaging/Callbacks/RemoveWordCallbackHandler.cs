@@ -1,11 +1,9 @@
-﻿using System.ComponentModel.Composition;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using BotCore.Cache;
 using Telegram.Bot;
 
-namespace BotCore.Handlers.Callback;
+namespace BotCore.Messaging.Callbacks;
 
-[Export(typeof(ICallbackHandler))]
 internal class RemoveWordCallbackHandler : CallbackHandlerBase
 {
     public RemoveWordCallbackHandler(IDataCache cache) : base(cache)

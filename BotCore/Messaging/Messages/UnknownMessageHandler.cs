@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel.Composition;
 using System.Threading.Tasks;
 using BotCore.Cache;
+using BotCore.Messaging.Callbacks;
 using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BotCore.Handlers.Message;
+namespace BotCore.Messaging.Messages;
 
-[Export(typeof(IMessageHandler))]
-internal class UnknownMessageHandler : IMessageHandler
+[Export(typeof(IMessageHandler<BotMessage>))]
+internal class UnknownMessageHandler : IMessageHandler<BotMessage>
 {
     private readonly IDataCache _dataCache;
 
@@ -16,12 +17,7 @@ internal class UnknownMessageHandler : IMessageHandler
         _dataCache = dataCache;
     }
 
-    public int Order => int.MaxValue;
-
-    public bool CanHandle(string message)
-    {
-        return true;
-    }
+    public bool CanHandle(BotMessage message) => message.Kind == MessageKind.Unknown;
 
     public Task Handle(BotMessage message, BotInstruments instruments)
     {

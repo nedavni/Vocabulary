@@ -1,13 +1,11 @@
-﻿using System.ComponentModel.Composition;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Threading.Tasks;
 using BotCore.Cache;
-using BotCore.Handlers.Callback.Dto;
+using BotCore.Messaging.Dto;
 using Telegram.Bot;
 
-namespace BotCore.Handlers.Callback;
+namespace BotCore.Messaging.Callbacks;
 
-[Export(typeof(ICallbackHandler))]
 internal class RemoveMeaningForWordCallbackHandler : CallbackHandlerBase
 {
     public RemoveMeaningForWordCallbackHandler(IDataCache cache) : base(cache)

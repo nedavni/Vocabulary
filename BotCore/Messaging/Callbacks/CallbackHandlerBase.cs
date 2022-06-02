@@ -1,10 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System.ComponentModel.Composition;
+using System.Threading.Tasks;
 using BotCore.Cache;
 using Telegram.Bot;
 
-namespace BotCore.Handlers.Callback;
+namespace BotCore.Messaging.Callbacks;
 
-internal abstract class CallbackHandlerBase : ICallbackHandler
+[InheritedExport(typeof(IMessageHandler<UserCallback>))]
+internal abstract class CallbackHandlerBase : IMessageHandler<UserCallback>
 {
     protected CallbackHandlerBase(IDataCache cache)
     {

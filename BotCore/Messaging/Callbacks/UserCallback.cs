@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 
-namespace BotCore;
+namespace BotCore.Messaging.Callbacks;
 
 public record struct UserCallback(CallbackKind Kind, Guid Id)
 {

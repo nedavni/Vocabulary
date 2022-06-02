@@ -1,4 +1,4 @@
-﻿namespace BotCore
+﻿namespace BotCore.Messaging.Callbacks
 {
     public enum CallbackKind
     {
@@ -12,10 +12,8 @@
         RemoveExactText
     }
 
-    internal class BotCommands
+    public static class KnownMenuCommands
     {
-        // Menu
-        public const string Train = nameof(Train);
-        public const string Repeat = nameof(Repeat);
+
     }
 }

@@ -14,7 +14,7 @@ namespace BotConsoleClient
         {
             using var compositionRoot = BuildCompositionRoot();
             using var cts = new CancellationTokenSource();
-
+            
             var bot = compositionRoot.Resolve<Bot>(args).Start(cts.Token);
             var botFailure = bot.ContinueWith(t => throw t.Exception, TaskContinuationOptions.OnlyOnFaulted);
 

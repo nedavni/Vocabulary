@@ -5,8 +5,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using BotCore.Handlers.Callback;
-using BotCore.Handlers.Message;
+using BotCore.Messaging;
+using BotCore.Messaging.Callbacks;
+using BotCore.Messaging.Messages;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -17,16 +18,13 @@ namespace BotCore;
 public sealed class Bot
 {
     private readonly TelegramBotClient _bot;
-    private readonly IMessageHandler[] _messageHandlers;
-    private readonly ICallbackHandler[] _callbackHandlers;
+    private readonly IMessageHandler<BotMessage>[] _messageHandlers;
+    private readonly IMessageHandler<UserCallback>[] _callbackHandlers;
 
-    public Bot(string token, IEnumerable<IMessageHandler> messageHandlers, IEnumerable<ICallbackHandler> callbackHandlers)
+    public Bot(string token, IEnumerable<IMessageHandler<BotMessage>> messageHandlers, IEnumerable<IMessageHandler<UserCallback>> callbackHandlers)
     {
         _bot = new TelegramBotClient(token);
-        _messageHandlers = messageHandlers
-            .OrderBy(h => h.Order)
-            .ToArray();
-
+        _messageHandlers = messageHandlers.ToArray();
         _callbackHandlers = callbackHandlers.ToArray();
     }
 
@@ -62,7 +60,7 @@ public sealed class Bot
 
     private async Task ProcessMessage(BotMessage message, BotInstruments instruments)
     {
-        var handler = _messageHandlers.FirstOrDefault(h => h.CanHandle(message.Text));
+        var handler = _messageHandlers.FirstOrDefault(h => h.CanHandle(message));
 
         if (handler == null)
         {
