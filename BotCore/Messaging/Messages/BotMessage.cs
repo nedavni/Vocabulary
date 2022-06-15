@@ -6,5 +6,6 @@ public enum MessageKind
 {
     Start = 0,
     Menu,
+    TrainTranslation,
     Unknown
 }

@@ -12,9 +12,9 @@ internal class RemoveMeaningForWordCallbackHandler : CallbackHandlerBase
     {
     }
 
-    public override CallbackKind CanHandleKind => CallbackKind.RemoveMeaningForWord;
+    public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.RemoveMeaningForWord;
 
-    protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+    protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
     {
         var (botClient, update, _) = botInstruments;
         var wordMeaning = JsonSerializer.Deserialize<RemoveMeaningForWordCallback>(callback.Data);

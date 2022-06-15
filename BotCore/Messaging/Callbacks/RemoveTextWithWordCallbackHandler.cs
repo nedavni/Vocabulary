@@ -13,9 +13,9 @@ internal class RemoveTextWithWordCallbackHandler : CallbackHandlerBase
     {
     }
 
-    public override CallbackKind CanHandleKind => CallbackKind.RemoveTextThatContainsWord;
+    public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.RemoveTextThatContainsWord;
 
-    protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+    protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
     {
         var (botClient, update, _) = botInstruments;
 

@@ -10,9 +10,9 @@ internal class RemoveExactTextCallbackHandler : CallbackHandlerBase
     {
     }
 
-    public override CallbackKind CanHandleKind => CallbackKind.RemoveExactText;
+    public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.RemoveExactText;
 
-    protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+    protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
     {
         var (botClient, update, _) = botInstruments;
 

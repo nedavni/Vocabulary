@@ -31,6 +31,7 @@ internal static class UpdateExtensions
             {
                 "/start" => MessageKind.Start,
                 "/menu" => MessageKind.Menu,
+                "/traintranslation" => MessageKind.TrainTranslation,
                 _ => MessageKind.Unknown
             };
     }

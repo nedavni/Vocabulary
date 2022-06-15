@@ -9,7 +9,9 @@
         RemoveMeaning,
         RemoveMeaningForWord,
         RemoveTextThatContainsWord,
-        RemoveExactText
+        RemoveExactText,
+        WrongMeaningChosen,
+        CorrectMeaningChosen
     }
 
     public static class KnownMenuCommands

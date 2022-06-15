@@ -30,7 +30,7 @@ internal class MenuMessageHandler : IMessageHandler<BotMessage>, IMessageHandler
         ReplyKeyboardMarkup replyKeyboardMarkup = new(
             new[]
             {
-                new KeyboardButton[] {"Train", "Menu"}
+                new KeyboardButton[] { "/traintranslation", "Menu"}
             })
         {
             ResizeKeyboard = true,

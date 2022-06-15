@@ -11,9 +11,9 @@ namespace BotCore.Messaging.Callbacks
         {
         }
 
-        public override CallbackKind CanHandleKind => CallbackKind.AddWordMeaning;
+        public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.AddWordMeaning;
 
-        protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+        protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
         {
             var (botClient, update, _) = botInstruments;
             var keyValue = callback.Data.Split('_');

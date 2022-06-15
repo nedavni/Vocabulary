@@ -15,16 +15,14 @@ internal abstract class CallbackHandlerBase : IMessageHandler<UserCallback>
 
     protected IDataCache Cache { get; }
 
-    public abstract CallbackKind CanHandleKind { get; }
-
-    public virtual bool CanHandle(UserCallback callback) => CanHandleKind == callback.Kind;
+    public abstract bool CanHandle(UserCallback callback);
 
     public Task Handle(UserCallback callback, BotInstruments botInstruments)
     {
         var (botClient, update, cancellationToken) = botInstruments;
         if (Cache.TryGetAsCallbackData(callback.Id, out var data))
         {
-            return HandleInternal(data, botInstruments);
+            return HandleInternal(data, callback.Kind, botInstruments);
         }
         return botClient.SendTextMessageAsync(
             update.CallbackQuery.Message.Chat.Id,
@@ -32,5 +30,5 @@ internal abstract class CallbackHandlerBase : IMessageHandler<UserCallback>
             cancellationToken: cancellationToken);
     }
 
-    protected abstract Task HandleInternal(CallbackData callback, BotInstruments botInstruments);
+    protected abstract Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments);
 }

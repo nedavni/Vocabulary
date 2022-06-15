@@ -10,9 +10,9 @@ internal class RemoveWordCallbackHandler : CallbackHandlerBase
     {
     }
 
-    public override CallbackKind CanHandleKind => CallbackKind.RemoveWord;
+    public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.RemoveWord;
 
-    protected override Task HandleInternal(CallbackData callback, BotInstruments botInstruments)
+    protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
     {
         var (botClient, update, _) = botInstruments;
         return botClient.SendTextMessageAsync(
