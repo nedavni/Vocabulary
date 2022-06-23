@@ -2,41 +2,67 @@
 using System.Linq;
 using System.Threading.Tasks;
 using BotCore.Cache;
-using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
+using Vocabulary;
 
 namespace BotCore.Messaging.Callbacks;
 
 internal class RemoveTextWithWordCallbackHandler : CallbackHandlerBase
 {
-    public RemoveTextWithWordCallbackHandler(IDataCache cache) : base(cache)
+    private readonly IVocabularyRepository _repository;
+
+    public RemoveTextWithWordCallbackHandler(IDataCache cache, IVocabularyRepository repository) : base(cache)
     {
+        _repository = repository;
     }
 
-    public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.RemoveTextThatContainsWord;
+    public override bool CanHandle(UserCallback callback)
+        => callback.Kind == CallbackKind.RemoveTextThatContainsWord ||
+           callback.Kind == CallbackKind.RemoveExactText;
 
-    protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
+    protected override async Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
+    {
+        switch (kind)
+        {
+            case CallbackKind.RemoveTextThatContainsWord:
+                await FindTextThatContainsWords(callback, botInstruments);
+                break;
+            case CallbackKind.RemoveExactText:
+                await RemoveExactText(callback, botInstruments);
+                break;
+            default: throw new NotImplementedException($"{nameof(CallbackKind)} - {kind}");
+
+        }
+    }
+
+    private Task FindTextThatContainsWords(CallbackData callback, BotInstruments botInstruments)
     {
         var (botClient, update, _) = botInstruments;
 
-        var textGenerator = () => string.Join("\n", Enumerable.Range(1, 5).Select(i => Guid.NewGuid().ToString()));
+        var textResults = _repository.FindTextThatContains(callback.UserId.AsRepositoryId(), callback.Data);
 
-        var replies = Enumerable
-            .Range(1, 5)
-            .Select(_ =>
-            {
-                var text = textGenerator();
-                var replyKeyboard = new InlineKeyboardMarkup(
-                    InlineKeyboardButton.WithCallbackData(
-                        "Remove this text",
-                        Cache.StoreCallback(CallbackKind.RemoveExactText, callback.UserId, text).Serialize()));
+        if (textResults.Count == 0)
+        {
+            return botClient.SendMessage($"There is no text that contains: {callback.Data}", update.CallbackQuery);
+        }
 
-                return botClient.SendTextMessageAsync(
-                    update.CallbackQuery.Message.Chat.Id,
-                    text,
-                    replyMarkup: replyKeyboard);
-            });
-            
+        var replies = textResults.Select(text =>
+        {
+            var replyKeyboard = new InlineKeyboardMarkup(
+                InlineKeyboardButton.WithCallbackData(
+                    "Remove this text",
+                    Cache.StoreCallback(CallbackKind.RemoveExactText, callback.UserId, text).Serialize()));
+
+            return botClient.SendMessage(text, update.CallbackQuery, replyKeyboard);
+        });
+
         return Task.WhenAll(replies);
     }
+
+    private Task RemoveExactText(CallbackData callback, BotInstruments botInstruments)
+    {
+        var(botClient, update, _) = botInstruments;
+        return botClient.SendMessage($"Not implemented yet!", update.CallbackQuery);
+    }
+
 }

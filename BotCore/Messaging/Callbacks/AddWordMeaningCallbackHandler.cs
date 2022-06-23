@@ -1,14 +1,17 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using BotCore.Cache;
-using Telegram.Bot;
-using Telegram.Bot.Types.Enums;
+using Vocabulary;
 
 namespace BotCore.Messaging.Callbacks
 {
     internal class AddWordMeaningCallbackHandler : CallbackHandlerBase
     {
-        public AddWordMeaningCallbackHandler(IDataCache dataCache) : base(dataCache)
+        private readonly IVocabularyRepository _repository;
+
+        public AddWordMeaningCallbackHandler(IDataCache dataCache, IVocabularyRepository repository) : base(dataCache)
         {
+            _repository = repository;
         }
 
         public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.AddWordMeaning;
@@ -16,20 +19,22 @@ namespace BotCore.Messaging.Callbacks
         protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
         {
             var (botClient, update, _) = botInstruments;
+
             var keyValue = callback.Data.Split('_');
             if (keyValue.Length != 2)
             {
-                return botClient.SendTextMessageAsync(
-                    update.CallbackQuery.Message.Chat.Id,
+                return botClient.SendMessage(
                     "Invalid formatting! Pair should be formatted as <code>word <b>_</b> meaning</code>",
-                    ParseMode.Html);
+                    update.CallbackQuery);
             }
 
-            //TODO: list of all meanings
-            return botClient.SendTextMessageAsync(
-                update.CallbackQuery.Message.Chat.Id,
-                $"For word {keyValue[0]} added meaning {keyValue[1]}",
-                ParseMode.Html);
+            _repository.Add(callback.UserId.AsRepositoryId(), keyValue[0], keyValue[1]);
+
+            var allMeanings = string.Join(Environment.NewLine, _repository.FindMeanings(callback.UserId.AsRepositoryId(), keyValue[0]));
+
+            return botClient.SendMessage(
+                $"For word {keyValue[0]} added meaning {keyValue[1]}\nAll meanings:\n{allMeanings}",
+                update.CallbackQuery);
         }
     }
 }

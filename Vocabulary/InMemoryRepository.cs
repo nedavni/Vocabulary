@@ -4,76 +4,46 @@ using System.Linq;
 
 namespace Vocabulary
 {
-    //internal sealed class InMemoryRepository : IVocabularyRepository
-    //{
-    //    private readonly IDictionary<VocabularyItem, HashSet<string>> _vocabulary;
+    internal sealed class InMemoryRepository : IVocabularyRepository
+    {
+        public void Add(UserId userId, string word, string meaning)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public InMemoryRepository()
-    //    {
-    //        _vocabulary = new Dictionary<VocabularyItem, HashSet<string>>();
-    //    }
+        public void Add(UserId userId, string text)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public IEnumerable<string> UntouchedWords => _vocabulary.Keys.Where(w => !w.IsTouched).Select(w => w.Word);
+        public bool RemoveWord(UserId userId, string word)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public IEnumerable<string> GetMeanings(string word) => _vocabulary[new VocabularyItem { Word = word }];
+        public void RemoveMeaning(UserId userId, string word, string meaning)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public void Add(string word, string meaning)
-    //    {
-    //        var item = new VocabularyItem { Word = word };
-    //        if (!_vocabulary.ContainsKey(item))
-    //        {
-    //            _vocabulary.Add(item, new HashSet<string> { meaning });
-    //        }
-    //        else
-    //        {
-    //            _vocabulary[item].Add(meaning);
-    //        }
-    //    }
+        public IReadOnlyCollection<string> FindMeanings(UserId userId, string word)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public void Add(string text)
-    //    {
-    //        throw new NotImplementedException();
-    //    }
+        public IReadOnlyCollection<string> FindWordsWithMeaning(UserId userId, string meaning)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public void RemoveWord(string word)
-    //    {
-    //        var item = new VocabularyItem { Word = word };
-    //        if (_vocabulary.ContainsKey(item))
-    //        {
-    //            _vocabulary.Remove(item);
-    //        }
-    //    }
+        public IReadOnlyCollection<string> FindTextThatContains(UserId asUserId, string callbackData)
+        {
+            throw new NotImplementedException();
+        }
 
-    //    public void RemoveMeaning(string word, string meaning)
-    //    {
-    //        var item = new VocabularyItem { Word = word };
-    //        _vocabulary[item].Remove(meaning);
-    //    }
-
-    //    private sealed class VocabularyItem : IEquatable<VocabularyItem>
-    //    {
-    //        public string Word { get; init; }
-
-    //        public bool IsTouched { get; init; }
-
-    //        public bool Equals(VocabularyItem other)
-    //        {
-    //            if (ReferenceEquals(null, other))
-    //                return false;
-    //            if (ReferenceEquals(this, other))
-    //                return true;
-    //            return Word == other.Word;
-    //        }
-
-    //        public override bool Equals(object obj)
-    //        {
-    //            return ReferenceEquals(this, obj) || obj is VocabularyItem other && Equals(other);
-    //        }
-
-    //        public override int GetHashCode()
-    //        {
-    //            return (Word != null ? Word.GetHashCode() : 0);
-    //        }
-    //    }
-    //}
+        public IReadOnlyList<WordWithMeanings> WordsWithMeanings(UserId repositoryId)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

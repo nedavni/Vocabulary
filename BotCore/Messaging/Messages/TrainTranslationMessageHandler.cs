@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using BotCore.Cache;
 using BotCore.Messaging.Callbacks;
 using Telegram.Bot;
-using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Vocabulary;
 
 namespace BotCore.Messaging.Messages;
 
@@ -16,10 +16,14 @@ namespace BotCore.Messaging.Messages;
 internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHandler<BotMessage>
 {
     private readonly IDataCache _cache;
+    private readonly IVocabularyRepository _repository;
+    private readonly Random _random;
 
-    public TrainTranslationMessageHandler(IDataCache cache) : base(cache)
+    public TrainTranslationMessageHandler(IDataCache cache, IVocabularyRepository repository) : base(cache)
     {
         _cache = cache;
+        _repository = repository;
+        _random = new Random();
     }
 
     public override bool CanHandle(UserCallback callback) => callback.Kind == CallbackKind.CorrectMeaningChosen ||
@@ -29,9 +33,16 @@ internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHan
 
     public Task Handle(BotMessage message, BotInstruments instruments)
     {
-        var word = "OloloWord " + Guid.NewGuid();
-        var answerOptions = Enumerable.Range(1, 3).Select(i => $"Meaning{i}").ToArray();
-        return MessageWithTranslationOptions(word, answerOptions, message.UserId, message.ChatId, instruments);
+        var userVocabulary = _repository.WordsWithMeanings(message.UserId.AsRepositoryId());
+
+        if (userVocabulary.Count == 1)
+        {
+            return instruments.BotClient.SendMessage($"There's nothing to train, you have only {userVocabulary.Count}!", message.ChatId);
+        }
+
+        var (wordToTrain, correctMeaning, wrongMeanings) = PrepareTrainWord(userVocabulary);
+
+        return MessageWithTranslationOptions(wordToTrain, correctMeaning, wrongMeanings, message.UserId, message.ChatId, instruments);
     }
 
     protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
@@ -50,59 +61,76 @@ internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHan
             update.CallbackQuery.Message.Chat.Id,
             "Wrong! Try one more time!");
 
-        var (word, meanings) = JsonSerializer.Deserialize<WrongTranslation>(callback.Data);
-        await MessageWithTranslationOptions(word, meanings, callback.UserId, update.CallbackQuery.Message.Chat.Id, instruments);
+        var (word, correctMeaning, wrongMeanings) = JsonSerializer.Deserialize<WrongTranslation>(callback.Data);
+        await MessageWithTranslationOptions(word, correctMeaning, wrongMeanings, callback.UserId, update.CallbackQuery.Message.Chat.Id, instruments);
     }
 
     private async Task HandleCorrectTranslation(CallbackData callback, BotInstruments instruments)
     {
         // 1) print all meanings for word
-        var _ = JsonSerializer.Deserialize<CorrectTranslation>(callback.Data);
+        var trainedWord = JsonSerializer.Deserialize<CorrectTranslation>(callback.Data).Word;
         // 2) go to next word
 
         var (botClient, update, _) = instruments;
 
-        await instruments.BotClient.SendTextMessageAsync(
-            update.CallbackQuery.Message.Chat.Id,
-            "Good job!\n Go to next word");
+        var meanings = _repository.FindMeanings(callback.UserId.AsRepositoryId(), trainedWord);
 
-        var word = "OloloWord " + Guid.NewGuid();
-        var answerOptions = Enumerable.Range(1, 3).Select(i => $"Meaning{i}").ToArray();
+        await instruments.BotClient.SendMessage($"CORRECT!\n{trainedWord} - {string.Join(",", meanings)}\nGO NEXT!", update.CallbackQuery);
 
-        await MessageWithTranslationOptions(word, answerOptions, callback.UserId, update.CallbackQuery.Message.Chat.Id, instruments);
+        var userVocabulary = _repository.WordsWithMeanings(callback.UserId.AsRepositoryId());
+
+        if (userVocabulary.Count == 1)
+        {
+            await instruments.BotClient.SendMessage($"There's nothing to train, you have only {userVocabulary.Count}!", update.CallbackQuery);
+            return;
+        }
+        var (wordToTrain, correctMeaning, wrongMeanings) = PrepareTrainWord(userVocabulary);
+        await MessageWithTranslationOptions(wordToTrain, correctMeaning, wrongMeanings, callback.UserId, update.CallbackQuery.Message.Chat.Id, instruments);
     }
 
-    private Task MessageWithTranslationOptions(string word, IReadOnlyList<string> answerOptions, long userId, long chatId,BotInstruments instruments)
+    private Task MessageWithTranslationOptions(string word, string correctMeaning, IList<string> wrongMeanings, long userId, long chatId, BotInstruments instruments)
     {
-        var reply = answerOptions.Select((translation, i) =>
-        {
-            if (i+1 == 2)
-            {
-                return new[]
-                {
-                    InlineKeyboardButton.WithCallbackData(
-                        translation,
-                        _cache.StoreCallback(CallbackKind.CorrectMeaningChosen, userId, JsonSerializer.Serialize(new CorrectTranslation(word))).Serialize())
-
-                };
-            }
-
-            return new[]
-            {
+        var correctCallback = InlineKeyboardButton.WithCallbackData(
+            correctMeaning,
+            _cache.StoreCallback(CallbackKind.CorrectMeaningChosen, userId, JsonSerializer.Serialize(new CorrectTranslation(word))).Serialize());
+        var wrongCallbacks = wrongMeanings.Select(translation =>
+       {
+           return new[]
+           {
                 InlineKeyboardButton.WithCallbackData(
                     translation,
-                    _cache.StoreCallback(CallbackKind.WrongMeaningChosen, userId, JsonSerializer.Serialize(new WrongTranslation(word, answerOptions))).Serialize())
-            };
-        });
+                    _cache.StoreCallback(CallbackKind.WrongMeaningChosen, userId, JsonSerializer.Serialize(new WrongTranslation(word, correctMeaning, wrongMeanings))).Serialize())
+           };
+       });
+
+        var reply = wrongCallbacks.ToList();
+        reply.Add(new[] { correctCallback });
+        reply.Shuffle();
+
         InlineKeyboardMarkup inlineKeyboard = new(reply);
 
-        return instruments.BotClient.SendTextMessageAsync(
-            chatId,
-            word,
-            replyMarkup: inlineKeyboard);
+        return instruments.BotClient.SendMessage(word, chatId, inlineKeyboard);
     }
 
-    private record struct WrongTranslation(string Word, IReadOnlyList<string> Meanings);
+    private (string WordToTrain, string CorrectMeaning, IList<string> WrongMeanings) PrepareTrainWord(IReadOnlyList<WordWithMeanings> userVocabulary)
+    {
+        const int meaningCount = 3;
+
+        var maxRandomValue = userVocabulary.Count - 1;
+        var correctWordIndex = _random.Next(maxRandomValue);
+        var (wordToTrain, correctMeanings) = userVocabulary[correctWordIndex];
+
+        var incorrectAnswers = userVocabulary.Count <= meaningCount
+            ? userVocabulary.Where((_, i) => i != correctWordIndex)
+            : userVocabulary.Where((_, i) => _random.Next(maxRandomValue) != correctWordIndex);
+
+        var correctMeaning = correctMeanings[_random.Next(correctMeanings.Count - 1)];
+        var wrongMeanings = incorrectAnswers.Select(a => a.Meanings[_random.Next(a.Meanings.Count - 1)]).ToList();
+
+        return new(wordToTrain, correctMeaning, wrongMeanings);
+    }
+
+    private record struct WrongTranslation(string Word, string CorrectMeaning, IList<string> WrongMeanings);
 
     private record struct CorrectTranslation(string Word);
 }
