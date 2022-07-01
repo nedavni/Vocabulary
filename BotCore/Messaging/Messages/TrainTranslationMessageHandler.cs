@@ -33,7 +33,7 @@ internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHan
 
     public Task Handle(BotMessage message, BotInstruments instruments)
     {
-        var userVocabulary = _repository.WordsWithMeanings(message.UserId.AsRepositoryId());
+        var userVocabulary = _repository.UserVocabulary(message.UserId.AsRepositoryId());
 
         if (userVocabulary.Count == 1)
         {
@@ -77,7 +77,7 @@ internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHan
 
         await instruments.BotClient.SendMessage($"CORRECT!\n{trainedWord} - {string.Join(",", meanings)}\nGO NEXT!", update.CallbackQuery);
 
-        var userVocabulary = _repository.WordsWithMeanings(callback.UserId.AsRepositoryId());
+        var userVocabulary = _repository.UserVocabulary(callback.UserId.AsRepositoryId());
 
         if (userVocabulary.Count == 1)
         {

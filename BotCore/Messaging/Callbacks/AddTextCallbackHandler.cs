@@ -17,7 +17,7 @@ namespace BotCore.Messaging.Callbacks
 
         protected override Task HandleInternal(CallbackData callback, CallbackKind kind, BotInstruments botInstruments)
         {
-            _repository.Add(callback.UserId.AsRepositoryId(), callback.Data);
+            _repository.AddText(callback.UserId.AsRepositoryId(), callback.Data);
             var (client, update, _) = botInstruments;
             return client.SendMessage($"Added as text:\n\n{callback.Data}", update.CallbackQuery);
         }

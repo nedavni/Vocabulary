@@ -28,7 +28,7 @@ namespace BotCore.Messaging.Callbacks
                     update.CallbackQuery);
             }
 
-            _repository.Add(callback.UserId.AsRepositoryId(), keyValue[0], keyValue[1]);
+            _repository.AddWordWithMeaning(callback.UserId.AsRepositoryId(), keyValue[0], keyValue[1]);
 
             var allMeanings = string.Join(Environment.NewLine, _repository.FindMeanings(callback.UserId.AsRepositoryId(), keyValue[0]));
 
