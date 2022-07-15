@@ -68,12 +68,15 @@ internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHan
     private async Task HandleCorrectTranslation(CallbackData callback, BotInstruments instruments)
     {
         // 1) print all meanings for word
-        var trainedWord = JsonSerializer.Deserialize<CorrectTranslation>(callback.Data).Word;
+        var trainedWord = JsonSerializer.Deserialize<CorrectTranslation>(callback.Data).Word.AsRepositoryString();
         // 2) go to next word
 
         var (botClient, update, _) = instruments;
 
-        var meanings = _repository.FindMeanings(callback.UserId.AsRepositoryId(), trainedWord);
+        var meanings = _repository
+            .UserVocabulary(callback.UserId.AsRepositoryId())
+            .Single(w => w.Word == trainedWord)
+            .Meanings;
 
         await instruments.BotClient.SendMessage($"CORRECT!\n{trainedWord} - {string.Join(",", meanings)}\nGO NEXT!", update.CallbackQuery);
 
@@ -116,13 +119,13 @@ internal class TrainTranslationMessageHandler : CallbackHandlerBase, IMessageHan
     {
         const int meaningCount = 3;
 
-        var maxRandomValue = userVocabulary.Count - 1;
-        var correctWordIndex = _random.Next(maxRandomValue);
+        var maxRandomExclusiveValue = userVocabulary.Count;
+        var correctWordIndex = _random.Next(maxRandomExclusiveValue);
         var (wordToTrain, correctMeanings) = userVocabulary[correctWordIndex];
 
         var incorrectAnswers = userVocabulary.Count <= meaningCount
             ? userVocabulary.Where((_, i) => i != correctWordIndex)
-            : userVocabulary.Where((_, i) => _random.Next(maxRandomValue) != correctWordIndex);
+            : userVocabulary.Where((_, i) => _random.Next(maxRandomExclusiveValue) != correctWordIndex);
 
         var correctMeaning = correctMeanings[_random.Next(correctMeanings.Count - 1)];
         var wrongMeanings = incorrectAnswers.Select(a => a.Meanings[_random.Next(a.Meanings.Count - 1)]).ToList();

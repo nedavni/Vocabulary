@@ -4,21 +4,29 @@ namespace Vocabulary
 {
     public interface IVocabularyRepository
     {
-        public void AddWordWithMeaning(UserId userId, string word, string meaning);
+        /// <summary>
+        /// Add word and meanings converted to lowercase using the casing rules of the invariant culture
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="word"></param>
+        /// <param name="meaning"></param>
+        void AddWordWithMeaning(UserId userId, string word, string meaning);
 
-        public void AddText(UserId userId, string text);
+        void AddText(UserId userId, string text);
 
-        public void RemoveWord(UserId userId, string word);
+        void RemoveWord(UserId userId, string word);
 
-        public void RemoveMeaning(UserId userId, string word, string meaning);
+        void RemoveMeaning(UserId userId, string word, string meaning);
 
-        IReadOnlyCollection<string> FindMeanings(UserId userId, string word);
+        //IReadOnlyCollection<string> FindMeanings(UserId userId, string word);
 
-        IReadOnlyCollection<string> FindWordsWithMeaning(UserId userId, string meaning);
+        //IReadOnlyCollection<string> FindWordsByMeaning(UserId userId, string meaning);
 
         //TODO: provide text id for faster operations
-        IReadOnlyCollection<string> FindTextThatContains(UserId asUserId, string words);
+        //IReadOnlyCollection<string> FindTextThatContains(UserId asUserId, string words);
 
-        IReadOnlyList<WordWithMeanings> UserVocabulary(UserId repositoryId);
+        IReadOnlyList<WordWithMeanings> UserVocabulary(UserId userId);
+
+        IReadOnlyList<string> Texts(UserId userId);
     }
 }

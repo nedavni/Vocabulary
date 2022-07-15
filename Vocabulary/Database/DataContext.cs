@@ -25,14 +25,17 @@ namespace Vocabulary.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var connectionString =
-                $@"Data Source=(LocalDb)\MSSQLLocalDB;Initial Catalog=Vocabulary;AttachDBFilename={Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "VocabularyDB.mdf")}";
-            optionsBuilder.UseSqlServer(connectionString);
+            if (!optionsBuilder.IsConfigured)
+            {
+                var connectionString =
+                    $@"Data Source=(LocalDb)\MSSQLLocalDB;Initial Catalog=Vocabulary;AttachDBFilename={Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "VocabularyDB.mdf")}";
+                optionsBuilder.UseSqlServer(connectionString);
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //modelBuilder.Entity<Word>().Navigation(w => w.Meanings).AutoInclude();
+            modelBuilder.Entity<Word>().Navigation(w => w.Meanings).AutoInclude();
 
             modelBuilder.Entity<Word>()
                 .HasMany(w => w.Meanings)

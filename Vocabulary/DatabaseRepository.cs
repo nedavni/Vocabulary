@@ -17,26 +17,37 @@ namespace Vocabulary
             _dataContextProvider = dataContextProvider;
         }
 
-        public void Add(UserId userId, string word, string meaning)
+        public void AddWordWithMeaning(UserId userId, string word, string meaning)
         {
             using var context = _dataContextProvider.Create();
             var user = EnsureUser(userId, context);
 
-            var dbWord = new Word(user, word);
-            context.Words.Add(dbWord);
+            var wordLowered = word.AsRepositoryString();
+            var meaningLowered = meaning.AsRepositoryString();
 
-            var dbMeaning = new Meaning(dbWord, meaning);
-            context.Meanings.Add(dbMeaning);
+            var dbWord = context.Words.FirstOrDefault(w => w.Data == wordLowered);
 
+            if (dbWord == null)
+            {
+                dbWord = new Word { User = user, Data = wordLowered };
+                context.Words.Add(dbWord);
+            }
+
+            var dbMeaning = context.Meanings.FirstOrDefault(m => m.Word == dbWord && m.Data == meaningLowered);
+            if (dbMeaning == null)
+            {
+                dbMeaning = new Meaning { Word = dbWord, Data = meaningLowered };
+                context.Meanings.Add(dbMeaning);
+            }
             context.SaveChanges();
         }
 
-        public void Add(UserId userId, string text)
+        public void AddText(UserId userId, string text)
         {
             using var context = _dataContextProvider.Create();
             var user = EnsureUser(userId, context);
 
-            context.Texts.Add(new Text(user, text));
+            context.Texts.Add(new Text { User = user, Data = text });
             context.SaveChanges();
         }
 
@@ -45,8 +56,10 @@ namespace Vocabulary
             using var context = _dataContextProvider.Create();
             var user = EnsureUser(userId, context);
 
+            var wordLowered = word.AsRepositoryString();
+
             var dbWord = context.Words.FindOrThrow(
-                w => w.User == user && w.Data == word,
+                w => w.User == user && w.Data == wordLowered,
                 $"Word {word} not defined by user!");
 
             context.Words.Remove(dbWord);
@@ -58,44 +71,19 @@ namespace Vocabulary
             using var context = _dataContextProvider.Create();
             var user = EnsureUser(userId, context);
 
+            var wordLowered = word.AsRepositoryString();
+            var meaningLowered = meaning.AsRepositoryString();
+
             var dbWord = context.Words.FindOrThrow(
-                w => w.User == user && w.Data == word,
-                $"Word {word} not defined by user!");
+                w => w.User == user && w.Data == wordLowered,
+                $"Word {wordLowered} not defined by user!");
 
             var dbMeaning = dbWord.Meanings.FindOrThrow(
-                m => m.Data == meaning,
-                $"Meaning {meaning} not defined for word {word}!");
+                m => m.Data == meaningLowered,
+                $"Meaning {meaningLowered} not defined for word {wordLowered}!");
 
             context.Meanings.Remove(dbMeaning);
             context.SaveChanges();
-        }
-
-        public IReadOnlyCollection<string> FindMeanings(UserId userId, string word)
-        {
-            using var context = _dataContextProvider.Create();
-            var user = EnsureUser(userId, context);
-
-            var dbWord = context.Words.FindOrThrow(
-                w => w.User == user && w.Data == word,
-                $"Word {word} not defined by user!");
-            return dbWord.Meanings.Select(m => m.Data).ToList();
-        }
-
-        public IReadOnlyCollection<string> FindWordsWithMeaning(UserId userId, string meaning)
-        {
-            using var context = _dataContextProvider.Create();
-            var user = EnsureUser(userId, context);
-
-            var dbWords = context.Meanings.Where(m => m.Word.User == user && m.Data == meaning).Select(m => m.Word);
-            return dbWords.Select(w => w.Data).ToList();
-        }
-
-        public IReadOnlyCollection<string> FindTextThatContains(UserId userId, string words)
-        {
-            using var context = _dataContextProvider.Create();
-            var user = EnsureUser(userId, context);
-
-            return context.Texts.Where(t => t.User == user && t.Data.Contains(words)).Select(t => t.Data).ToList();
         }
 
         public IReadOnlyList<WordWithMeanings> UserVocabulary(UserId userId)
@@ -108,13 +96,20 @@ namespace Vocabulary
                 .ToList();
         }
 
+        public IReadOnlyList<string> Texts(UserId userId)
+        {
+            using var context = _dataContextProvider.Create();
+            var user = EnsureUser(userId, context);
+            return context.Texts.Where(t => t.User == user).Select(t => t.Data).ToList();
+        }
+
         private static User EnsureUser(UserId userId, DataContext context)
         {
             var (userSource, id) = userId;
             var user = context.Users.FirstOrDefault(u => u.Source == userSource && u.SourceId == id);
             if (user == null)
             {
-                user = new User(userSource, id);
+                user = new User { Source = userSource, SourceId = id };
                 context.Users.Add(user);
                 context.SaveChanges();
             }

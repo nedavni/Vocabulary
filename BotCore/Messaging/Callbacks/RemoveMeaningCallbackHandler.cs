@@ -31,7 +31,17 @@ internal class RemoveMeaningCallbackHandler : CallbackHandlerBase
     {
         var (botClient, update, _) = botInstruments;
 
-        var words = _repository.FindWordsWithMeaning(callback.UserId.AsRepositoryId(), callback.Data);
+        var meaningToDelete = callback.Data.AsRepositoryString();
+
+        var words = _repository
+            .UserVocabulary(callback.UserId.AsRepositoryId())
+            .FindWordsByMeaning(meaningToDelete)
+            .ToList();
+
+        if (words.Count == 0)
+        {
+            return botClient.SendMessage($"There is no saved words with meaning: {meaningToDelete}", update.CallbackQuery);
+        }
 
         var wordsWithMeaning =
             words
@@ -41,7 +51,7 @@ internal class RemoveMeaningCallbackHandler : CallbackHandlerBase
                         InlineKeyboardButton.WithCallbackData(
                             word,
                             Cache.StoreCallback(CallbackKind.RemoveMeaningForWord, callback.UserId,
-                                    JsonSerializer.Serialize(new RemoveMeaningForWordCallback(word, callback.Data)))
+                                    JsonSerializer.Serialize(new RemoveMeaningForWordCallback(word, meaningToDelete)))
                                 .Serialize())
                     }
                 );
@@ -56,7 +66,7 @@ internal class RemoveMeaningCallbackHandler : CallbackHandlerBase
         var (botClient, update, _) = botInstruments;
         var (word, meaning) = JsonSerializer.Deserialize<RemoveMeaningForWordCallback>(callback.Data);
 
-        var words = _repository.FindWordsWithMeaning(callback.UserId.AsRepositoryId(), meaning);
+        var words = _repository.UserVocabulary(callback.UserId.AsRepositoryId()).FindWordsByMeaning(meaning).ToList();
 
         if (words.Count == 0)
         {

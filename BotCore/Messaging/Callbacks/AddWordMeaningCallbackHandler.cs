@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using BotCore.Cache;
 using Vocabulary;
@@ -28,12 +29,14 @@ namespace BotCore.Messaging.Callbacks
                     update.CallbackQuery);
             }
 
-            _repository.AddWordWithMeaning(callback.UserId.AsRepositoryId(), keyValue[0], keyValue[1]);
+            var word = keyValue[0].AsRepositoryString();
+            var meaning = keyValue[1].AsRepositoryString();
+            _repository.AddWordWithMeaning(callback.UserId.AsRepositoryId(), word, meaning);
 
-            var allMeanings = string.Join(Environment.NewLine, _repository.FindMeanings(callback.UserId.AsRepositoryId(), keyValue[0]));
+            var allMeanings = string.Join(Environment.NewLine, _repository.UserVocabulary(callback.UserId.AsRepositoryId()).Single(v => v.Word == word).Meanings);
 
             return botClient.SendMessage(
-                $"For word {keyValue[0]} added meaning {keyValue[1]}\nAll meanings:\n{allMeanings}",
+                $"Added: <b>{word} - {meaning}</b>\nAll meanings:\n<b>{allMeanings}</b>",
                 update.CallbackQuery);
         }
     }

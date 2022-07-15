@@ -39,7 +39,7 @@ internal class RemoveTextWithWordCallbackHandler : CallbackHandlerBase
     {
         var (botClient, update, _) = botInstruments;
 
-        var textResults = _repository.FindTextThatContains(callback.UserId.AsRepositoryId(), callback.Data);
+        var textResults = _repository.Texts(callback.UserId.AsRepositoryId()).Where(t=> t.Contains(callback.Data)).ToList();
 
         if (textResults.Count == 0)
         {

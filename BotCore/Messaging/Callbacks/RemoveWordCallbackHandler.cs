@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using BotCore.Cache;
 using Telegram.Bot;
 using Vocabulary;
@@ -20,19 +22,21 @@ internal class RemoveWordCallbackHandler : CallbackHandlerBase
     {
         var (botClient, update, _) = botInstruments;
 
-        var meanings = _repository.FindMeanings(callback.UserId.AsRepositoryId(), callback.Data);
+        var wordToRemove = callback.Data.AsRepositoryString();
 
-        if (meanings.Count == 0)
+        try
         {
-            return botClient.SendTextMessageAsync(
-                update.CallbackQuery.Message.Chat.Id,
-                $"There is no saved word: {callback.Data}");
+            var meanings = _repository.UserVocabulary(callback.UserId.AsRepositoryId())
+                .Single(w => w.Word == wordToRemove)
+                .Meanings;
+
+            _repository.RemoveWord(callback.UserId.AsRepositoryId(), wordToRemove);
+
+            return botClient.SendMessage($"Removed:\n<b>{wordToRemove} - {string.Join(',', meanings)}</b>", update.CallbackQuery);
         }
-
-        _repository.RemoveWord(callback.UserId.AsRepositoryId(), callback.Data);
-
-        return botClient.SendTextMessageAsync(
-            update.CallbackQuery.Message.Chat.Id,
-            $"Removed:\n{callback.Data} - {string.Join(',', meanings)}");
+        catch (InvalidOperationException e) when (e.Message == "Sequence contains no matching element")
+        {
+            return botClient.SendMessage($"There is no saved word: <b>{wordToRemove}</b>", update.CallbackQuery);
+        }
     }
 }
